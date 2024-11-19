@@ -1,14 +1,11 @@
-﻿using Etch.OrchardCore.ContentPermissions.Models;
+using Etch.OrchardCore.ContentPermissions.Models;
 using Etch.OrchardCore.ContentPermissions.Services;
 using Etch.OrchardCore.ContentPermissions.ViewModels;
 using Microsoft.AspNetCore.Http;
 using OrchardCore.ContentManagement.Display.ContentDisplay;
 using OrchardCore.ContentManagement.Display.Models;
-using OrchardCore.ContentManagement.Metadata;
-using OrchardCore.DisplayManagement.ModelBinding;
 using OrchardCore.DisplayManagement.Views;
 using OrchardCore.Security.Services;
-using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -46,6 +43,11 @@ namespace Etch.OrchardCore.ContentPermissions.Drivers
                 return null;
             }
 
+            if (_httpContextAccessor.HttpContext == null)
+            {
+                return null;
+            }
+
             _httpContextAccessor.HttpContext.Response.StatusCode = 403;
 
             var redirectUrl = "/Error/403";
@@ -78,16 +80,16 @@ namespace Etch.OrchardCore.ContentPermissions.Drivers
             });
         }
 
-        public override async Task<IDisplayResult> UpdateAsync(ContentPermissionsPart model, IUpdateModel updater, UpdatePartEditorContext context)
+        public override async Task<IDisplayResult> UpdateAsync(ContentPermissionsPart part, UpdatePartEditorContext context)
         {
-            await updater.TryUpdateModelAsync(model, Prefix, m => m.Enabled, m => m.Roles);
+            await context.Updater.TryUpdateModelAsync(part, Prefix, m => m.Enabled, m => m.Roles);
 
-            if (!model.Enabled)
+            if (!part.Enabled)
             {
-                model.Roles = Array.Empty<string>();
+                part.Roles = [];
             }
 
-            return Edit(model, context);
+            return await EditAsync(part, context);
         }
 
         #endregion

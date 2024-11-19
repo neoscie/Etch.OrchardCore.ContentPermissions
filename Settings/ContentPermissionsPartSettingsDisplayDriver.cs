@@ -1,8 +1,8 @@
-﻿using Etch.OrchardCore.ContentPermissions.Models;
+using Etch.OrchardCore.ContentPermissions.Models;
 using Etch.OrchardCore.ContentPermissions.ViewModels;
 using OrchardCore.ContentManagement.Metadata.Models;
 using OrchardCore.ContentTypes.Editors;
-using OrchardCore.DisplayManagement.ModelBinding;
+using OrchardCore.DisplayManagement.Handlers;
 using OrchardCore.DisplayManagement.Views;
 using System.Threading.Tasks;
 
@@ -10,35 +10,34 @@ namespace Etch.OrchardCore.ContentPermissions.Settings
 {
     public class ContentPermissionsPartSettingsDisplayDriver : ContentTypePartDefinitionDisplayDriver
     {
-        public override IDisplayResult Edit(ContentTypePartDefinition contentTypePartDefinition, IUpdateModel updater)
+        public override IDisplayResult Edit(ContentTypePartDefinition model, BuildEditorContext context)
         {
-            if (!string.Equals(nameof(ContentPermissionsPart), contentTypePartDefinition.PartDefinition.Name))
+            if (!string.Equals(nameof(ContentPermissionsPart), model.PartDefinition.Name))
             {
                 return null;
             }
 
-            return Initialize<ContentPermissionsPartSettingsViewModel>("ContentPermissionsPartSettings_Edit", model =>
+            return Initialize<ContentPermissionsPartSettingsViewModel>("ContentPermissionsPartSettings_Edit", viewModel =>
             {
-                var settings = contentTypePartDefinition.GetSettings<ContentPermissionsPartSettings>();
-
-                model.RedirectUrl = settings.RedirectUrl;
+                var settings = model.GetSettings<ContentPermissionsPartSettings>();
+                viewModel.RedirectUrl = settings.RedirectUrl;
             }).Location("Content");
         }
 
-        public override async Task<IDisplayResult> UpdateAsync(ContentTypePartDefinition contentTypePartDefinition, UpdateTypePartEditorContext context)
+        public override async Task<IDisplayResult> UpdateAsync(ContentTypePartDefinition model, UpdateTypePartEditorContext context)
         {
-            if (!string.Equals(nameof(ContentPermissionsPart), contentTypePartDefinition.PartDefinition.Name))
+            if (!string.Equals(nameof(ContentPermissionsPart), model.PartDefinition.Name))
             {
                 return null;
             }
 
-            var model = new ContentPermissionsPartSettingsViewModel();
+            var viewModel = new ContentPermissionsPartSettingsViewModel();
 
-            await context.Updater.TryUpdateModelAsync(model, Prefix, m => m.RedirectUrl);
+            await context.Updater.TryUpdateModelAsync(viewModel, Prefix, m => m.RedirectUrl);
 
-            context.Builder.WithSettings(new ContentPermissionsPartSettings { RedirectUrl = model.RedirectUrl });
+            context.Builder.WithSettings(new ContentPermissionsPartSettings { RedirectUrl = viewModel.RedirectUrl });
 
-            return Edit(contentTypePartDefinition, context.Updater);
+            return Edit(model, context);
         }
     }
 }
